@@ -1,0 +1,138 @@
+name: Performance Test
+
+on:
+  push:
+    branches: '*'
+    # branches: [ master, main, fix ]
+  #pull_request:
+  #  branches: [ master ]
+  #schedule:
+  #  - cron: 0 0 * * 0 ### weekly
+  workflow_dispatch:
+    inputs:
+      scenarioName:
+        default: 'load'
+        required: true
+        description: 'Scenario name'
+      baseUrl:
+        default: 'http://json_server:3000'
+        required: true
+        description: 'Base Url'
+      statsdServerAddress:
+        default: 'datadog'
+        required: true
+        description: 'StatsdServer Address'
+      statsdServerPort:
+        default: '8125'
+        required: true
+        description: 'StatsdServer Port.'
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    env:
+      SCENARIO_NAME: 'load'
+      BASE_URL: "http://json_server:3000"
+    outputs:
+      scenarioName: ${{ steps.setup_step.outputs.scenarioName }}
+      baseUrl: ${{ steps.setup_step.outputs.baseUrl }}
+    steps:
+      - name: Overwrite Variables
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "SCENARIO_NAME=${{ github.event.inputs.scenarioName }}" >> $GITHUB_ENV
+          echo "BASE_URL=${{ github.event.inputs.baseUrl }}" >> $GITHUB_ENV
+      - name: Setup Variables
+        id: setup_step
+        run: |
+          echo "Starting Performance Test with configurations:"
+          echo "SCENARIO_NAME = ${{ env.SCENARIO_NAME }}"
+          echo "BASE_URL = ${{ env.BASE_URL }}"
+          echo "Setting output params."
+          echo "scenarioName=${{ env.SCENARIO_NAME }}" >> $GITHUB_OUTPUT
+          echo "baseUrl=${{ env.BASE_URL }}" >> $GITHUB_OUTPUT
+  k6:
+    runs-on: ubuntu-latest
+    container:
+      image: loadimpact/k6:latest
+      options: --user 0 # root user OR --user 1001 # ← non-root user
+    name: k6
+    timeout-minutes: 180
+    needs:
+      - setup
+    services:
+      datadog:
+        image: datadog/agent:latest
+        env:
+          DOCKER_CONTENT_TRUST: 1
+          DD_SITE: datadoghq.eu
+          DD_API_KEY: "${{ env.DD_API_KEY }}"
+          DD_DOGSTATSD_NON_LOCAL_TRAFFIC: 1
+          DD_DOCKER_LABELS_AS_TAGS: '{"my.custom.label.project":"k6","my.custom.label.version":"1.0"}'
+          DD_TAGS: "tool:k6 scenario:${{ env.SCENARIO_NAME }} base_url:${{ env.BASE_URL }} test_run_id:${{ github.run_id }}"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - /proc/:/host/proc/
+          - /sys/fs/cgroup/:/host/sys/fs/cgroup
+        ports:
+          - '8125:8125/udp'
+        options: '--hostname=datadog --name=dd_agent'
+      json_server:
+        image: savvagenchevskiy/json-server:latest
+        ports:
+          - '3000:3000'
+        options: '--hostname=json_server --name=json_server'
+    env:
+      DOCKER_CONTENT_TRUST: 1
+      SCENARIO_NAME: "${{ needs.setup.outputs.scenarioName }}"
+      BASE_URL: "${{ needs.setup.outputs.baseUrl }}"
+      STATSD_SERVER_ADDRESS: 'datadog' # "${{ github.event.inputs.statsdServerAddress }}"
+      STATSD_SERVER_PORT: 8125
+      DD_API_KEY: "${{ secrets.DATADOG_API_KEY }}"
+      K6_STATSD_ADDR: "datadog:8125"
+      K6_STATSD_ENABLE_TAGS: true
+    steps:
+      - name: Checkout repository 🛎️
+        uses: actions/checkout@v2
+
+      - name: Install Deps 🔧
+        run: |
+          apk add git yarn
+          yarn install
+
+      - name: Make reports directory
+        run: mkdir -p reports
+
+      - name: Build
+        run: webpack
+
+      - name: Run K6 Test Manually 🧪️
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "STATSD_SERVER_ADDRESS=${{ github.event.inputs.statsdServerAddress }}" >> $GITHUB_ENV
+          echo "STATSD_SERVER_PORT=${{ github.event.inputs.statsdServerPort }}" >> $GITHUB_ENV
+          echo "K6_STATSD_ADDR=${{ github.event.inputs.statsdServerAddress }}:${{ github.event.inputs.statsdServerPort }}" >> $GITHUB_ENV
+          k6 run dist/${{ github.event.inputs.scenarioName }}-test.js --out statsd
+        continue-on-error: true
+
+      - name: Run K6 Test 🧪️
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }} # ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.head_ref == 'master' ) }}
+        run: k6 run dist/${{ env.SCENARIO_NAME }}-test.js --out statsd
+        continue-on-error: true
+
+      - name: Archive test report
+        uses: actions/upload-artifact@v2
+        if: success()
+        with:
+          name: k6-summary-report
+          path: reports/*
+          retention-days: 15
+
+      - name: Deploy Report to GitHub Pages 🚀
+        if: success() # always()
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: reports
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
