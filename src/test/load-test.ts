@@ -18,7 +18,7 @@ export let options: Options = {
             executor: 'constant-vus',
             exec: "readScn",
             vus: 5,
-            duration: '40s'
+            duration: '120s'
         },
         writerScn: {
             //executor: "per-vu-iterations",
@@ -27,7 +27,7 @@ export let options: Options = {
             executor: 'constant-vus',
             exec: "writeScn",
             vus: 5,
-            duration: '40s'
+            duration: '120s'
         }
     },
     thresholds: {

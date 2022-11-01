@@ -6,12 +6,13 @@ import {Comment, Post} from "../models";
 import * as _ from "lodash";
 import {HttpResponse} from "../client/response";
 import {HttpRequest} from "../client/request";
-import {CONFIG} from "../config/global";
 import {defaultAuthParams, defaultParams} from "./index";
 import {randomComment} from "../data/data.generator";
 // @ts-ignore
 import { randomIntBetween } from 'https://jslib.k6.io/k6-utils/1.1.0/index.js'
 import {faker} from "@faker-js/faker/locale/en_US";
+
+const BASE_URL = __ENV.BASE_URL !== undefined ? __ENV.BASE_URL: "http://localhost:3001"
 
 export type PostsResp = {
     randomPost: number|undefined,
@@ -21,7 +22,7 @@ export function getPosts(): PostsResp {
     const params = {
         ...defaultParams, tags: { name: "GET /posts" }
     }
-    const resp = http.get(`${CONFIG.BASE_URL}/posts`, params)
+    const resp = http.get(`${BASE_URL}/posts`, params)
     checkStatusCodeIs(200, resp)
     checkBodyHaveLengthGte(1, resp)
     check(resp, { 'have property id': res => JSON.parse(<string>res.body)[0].hasOwnProperty('id') })
@@ -36,7 +37,7 @@ export function getPost(id: number|undefined): Array<number>{
     const params = {
         ...defaultParams, tags: { name: "GET /posts/ID" }
     }
-    const post = new HttpResponse(http.get(`${CONFIG.BASE_URL}/posts/${id}`, params))
+    const post = new HttpResponse(http.get(`${BASE_URL}/posts/${id}`, params))
         .statusCodeIs(200)
         .haveProperty('id')
         .body<Post>()  //const post: Post = deserialize(Post, <string>resp.body)
@@ -53,7 +54,7 @@ export function getComment(id: number|undefined): number|undefined {
     const params = {
         ...defaultParams, tags: { name: "GET /comments/ID" }
     }
-    return HttpRequest.get(`${CONFIG.BASE_URL}/comments/${id}`, params)
+    return HttpRequest.get(`${BASE_URL}/comments/${id}`, params)
         .statusCodeIs(200)
         .haveProperty("id")
         .body<Comment>().id
@@ -69,7 +70,7 @@ export function createComment(comment: Comment): number {
     //     .haveProperty("id")
     //     .haveProperty("email")
     //     .body().id
-    return HttpRequest.post(`${CONFIG.BASE_URL}/comments`, comment, params)
+    return HttpRequest.post(`${BASE_URL}/comments`, comment, params)
         .statusCodeIs(201)
         .haveProperty("id")
         .haveProperty("email")
