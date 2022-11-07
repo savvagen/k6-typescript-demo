@@ -14,6 +14,11 @@ module.exports = {
     },
     resolve: {
         extensions: ['.ts', '.js'],
+        fallback:  {
+            "crypto": require.resolve("crypto-browserify"),
+            "stream": require.resolve("stream-browserify"),
+            "constants": require.resolve("constants-browserify"),
+        }
     },
     module: {
         rules: [

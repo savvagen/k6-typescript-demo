@@ -32,6 +32,14 @@
     "webpack-glob-entries": "^1.0.1"
   },
   "dependencies": {
+    "crypto-js": "^4.1.1",
+    "@types/crypto-js": "^4.1.1",
+    "node-forge": "^1.3.1",
+    "node-rsa": "^1.1.1",
+    "crypto-browserify": "^3.12.0",
+    "path-browserify": "^1.0.1",
+    "stream-browserify": "^3.0.0",
+    "buffer": "^6.0.3",
     "process": "^0.11.10"
   }
 }
