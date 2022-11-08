@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+
+  grafana:
+    image: grafana/grafana:8.2.3
+    container_name: grafana
+    hostname: grafana
+    depends_on:
+      - influxdb
+    links:
+      - influxdb
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      - GF_INSTALL_PLUGINS=michaeldmoore-multistat-panel,grafana-piechart-panel,yesoreyeram-boomtable-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+    restart: always
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    restart: unless-stopped
+    environment:
+      - INFLUXDB_DB=k6
+      #- INFLUXDB_USER=test
+      #- INFLUXDB_ADMIN_ENABLED=true
+      #- INFLUXDB_ADMIN_USER=admin
+      #- INFLUXDB_ADMIN_PASSWORD=Welcome1
+    volumes:
+      - influx_data:/var/lib/influxdb
+    ports:
+      - "8086:8086"
+
+networks:
+  default:
+    name: k6-sandbox
+
+volumes:
+  influx_data: {}
+  grafana_data: {}
+  prometheus_data: {}
+  # portainer: {}

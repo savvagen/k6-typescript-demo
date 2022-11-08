@@ -1,0 +1,16 @@
+# config file version
+apiVersion: 1
+
+# list of datasources that should be deleted from the database
+#deleteDatasources:
+#  - name: Prometheus
+#    orgId: 1
+
+datasources:
+  - name: myinfluxdb
+    type: influxdb
+    access: proxy
+    database: k6
+    orgId: 1
+    url: http://influxdb:8086
+    isDefault: true
