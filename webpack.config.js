@@ -7,7 +7,7 @@ const {ProvidePlugin} = require("webpack");
 module.exports = {
     mode: 'production',
     entry: GlobEntries('./src/test/*test*.ts'), // Generates multiple entry for each test
-    //entry: { load: './src/test/load-test.ts', first: './src/test/first-test.ts' },
+    //entry: { load: './src/test/load-test.ts' },
     output: {
         path: path.join(__dirname, 'dist'),
         libraryTarget: 'commonjs',
@@ -19,6 +19,7 @@ module.exports = {
             "crypto": require.resolve("crypto-browserify"),
             "stream": require.resolve("stream-browserify"),
             "constants": require.resolve("constants-browserify"),
+            "buffer": require.resolve("buffer/")
         }
     },
     module: {
