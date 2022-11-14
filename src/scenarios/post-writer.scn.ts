@@ -1,8 +1,8 @@
 import {defaultAuthParams, defaultAuthTokenParams, defaultParams} from "./index";
-import {HttpResponse} from "../client/response";
+import {K6Resp} from "../client/response";
 import http from "k6/http";
 import {Post, User} from "../models";
-import {HttpRequest} from "../client/request";
+import {Http} from "../client/request";
 import {group, sleep} from "k6";
 import {randomComment, randomPost, randomUser} from "../data/data.generator";
 import {createComment} from "./post-reader.scn";
@@ -13,22 +13,18 @@ export type TokenResp = { token: string }
 
 export function getToken(): TokenResp {
     const params = {
-        ...defaultAuthParams("test", "test"),
-        tags: {
-            name: "GET /get_token"
-        }
+        ...defaultAuthParams("test", "test"), tags: { name: "GET /get_token" }
     }
-    return new HttpResponse(http.get(`${BASE_URL}/get_token`, params))
+    return new K6Resp(http.get(`${BASE_URL}/get_token`, params))
         .statusCodeIs(200)
         .body<TokenResp>()
 }
 
 export function createUser(user: User, token: string) {
     const params = {
-        ...defaultAuthTokenParams(token),
-        tags: { name: "POST /users" }
+        ...defaultAuthTokenParams(token), tags: { name: "POST /users" }
     }
-    return HttpRequest.post(`${BASE_URL}/users`, user, params)
+    return Http.post(`${BASE_URL}/users`, user, params)
         .statusCodeIs(201)
         .haveProperty("id")
         .body<User>()
@@ -37,10 +33,9 @@ export function createUser(user: User, token: string) {
 
 export function createPost(post: Post) {
     const params = {
-        ...defaultParams,
-        tags: { name: "POST /posts" }
+        ...defaultParams, tags: { name: "POST /posts" }
     }
-    return HttpRequest.post(`${BASE_URL}/posts`, post, params)
+    return Http.post(`${BASE_URL}/posts`, post, params)
         .statusCodeIs(201)
         .haveProperty("id")
         .body<Post>()
@@ -51,12 +46,11 @@ export function updatePost(id: number|undefined, comment: Post): Post {
     const params = {
         ...defaultParams, tags: { name: "PUT /posts/ID" }
     }
-    return HttpRequest.put(`${BASE_URL}/posts/${id}`, comment, params)
+    return Http.put(`${BASE_URL}/posts/${id}`, comment, params)
         .statusCodeIs(200)
         .haveProperty("id")
         .body<Post>()
 }
-
 
 export function postWriterScn(){
     group("Writer Flow", ()=> {

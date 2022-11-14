@@ -98,10 +98,10 @@ jobs:
       - name: Install Deps 🔧
         run: |
           apk add git yarn
-          yarn install
+          npm install
 
       - name: Build 🔧
-        run: yarn run build
+        run: npm run build
 
       - name: Make reports directory
         run: mkdir -p reports

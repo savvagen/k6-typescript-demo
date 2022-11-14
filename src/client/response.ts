@@ -1,7 +1,7 @@
 import {check, Checkers, fail} from "k6";
 import {RefinedResponse} from "k6/http";
 
-export class HttpResponse {
+export class K6Resp {
     conditionSet: Checkers<any>
 
     constructor(public resp: RefinedResponse<any>) {
@@ -12,14 +12,14 @@ export class HttpResponse {
         return JSON.parse(<string>this.resp.body) as T
     }
 
-    public statusCodeIs(statusCode: number|undefined): HttpResponse {
+    public statusCodeIs(statusCode: number|undefined): K6Resp {
         const key = `status is ${statusCode}`
         this.conditionSet[key] = (res) => res.status === statusCode
         this.runCheck(key, this.resp, this.conditionSet, { status: 'ok' })
         return this
     }
 
-    public haveProperty(propertyName: string): HttpResponse {
+    public haveProperty(propertyName: string): K6Resp {
         const key = `have property ${propertyName}`
         this.conditionSet[key] = (res) => res.json()!.hasOwnProperty(propertyName) //JSON.parse(<string>res.body).hasOwnProperty(propertyName)
         this.runCheck(key, this.resp, this.conditionSet)

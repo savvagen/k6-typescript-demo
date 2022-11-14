@@ -6,8 +6,8 @@ const {ProvidePlugin} = require("webpack");
 
 module.exports = {
     mode: 'production',
-    //entry: GlobEntries('./src/test/*test*.ts'), // Generates multiple entry for each test
-    entry: { load: './src/test/load-test.ts' },
+    entry: GlobEntries('./src/test/*test*.ts'), // Generates multiple entry for each test
+    //entry: { load: './src/test/load-test.ts', first: './src/test/first-test.ts' },
     output: {
         path: path.join(__dirname, 'dist'),
         libraryTarget: 'commonjs',

@@ -4,8 +4,8 @@ import {check,group, sleep} from "k6";
 import {deserializeArray} from "class-transformer";
 import {Comment, Post} from "../models";
 import * as _ from "lodash";
-import {HttpResponse} from "../client/response";
-import {HttpRequest} from "../client/request";
+import {K6Resp} from "../client/response";
+import {Http} from "../client/request";
 import {defaultAuthParams, defaultParams} from "./index";
 import {randomComment} from "../data/data.generator";
 // @ts-ignore
@@ -37,7 +37,7 @@ export function getPost(id: number|undefined): Array<number>{
     const params = {
         ...defaultParams, tags: { name: "GET /posts/ID" }
     }
-    const post = new HttpResponse(http.get(`${BASE_URL}/posts/${id}`, params))
+    const post = new K6Resp(http.get(`${BASE_URL}/posts/${id}`, params))
         .statusCodeIs(200)
         .haveProperty('id')
         .body<Post>()  //const post: Post = deserialize(Post, <string>resp.body)
@@ -54,7 +54,7 @@ export function getComment(id: number|undefined): number|undefined {
     const params = {
         ...defaultParams, tags: { name: "GET /comments/ID" }
     }
-    return HttpRequest.get(`${BASE_URL}/comments/${id}`, params)
+    return Http.get(`${BASE_URL}/comments/${id}`, params)
         .statusCodeIs(200)
         .haveProperty("id")
         .body<Comment>().id
@@ -65,18 +65,12 @@ export function createComment(comment: Comment): number {
     const params = {
         ...defaultParams, tags: { name: "POST /comments" }
     }
-    // return new HttpResponse(http.post(`${BASE_URL}/comments`, JSON.stringify(comment), params))
-    //     .statusCodeIs(201)
-    //     .haveProperty("id")
-    //     .haveProperty("email")
-    //     .body().id
-    return HttpRequest.post(`${BASE_URL}/comments`, comment, params)
+    return Http.post(`${BASE_URL}/comments`, comment, params)
         .statusCodeIs(201)
         .haveProperty("id")
         .haveProperty("email")
         .body().id
 }
-
 
 export function postReaderScn() {
     group("Reader Flow", ()=> {
