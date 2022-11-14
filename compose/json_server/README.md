@@ -7,7 +7,7 @@
 ``` 
 cd json_server
 
-docker build -t my/json-server:latest -f Dockerfile .
+docker build --platform linux/amd64 -t savvagenchevskiy/json-server:latest -f Dockerfile .
 
 ```
 2. Run json-server
