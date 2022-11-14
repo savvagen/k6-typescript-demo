@@ -49,7 +49,7 @@ export function writeScn() { postWriterScn() }
 
 export function handleSummary(data: object) {
     return {
-        "result.html": htmlReport(data),
+        "reports/index.html": htmlReport(data),
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     };
 }
